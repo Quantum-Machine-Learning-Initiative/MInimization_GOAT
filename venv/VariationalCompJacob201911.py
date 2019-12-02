@@ -8,6 +8,8 @@ from numpy import ndarray
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
+# commit test
+
 P_0 = np.array([[1, 0], [0, 0]])  # |0><0|
 P_1 = np.array([[0, 0], [0, 1]])  # |1><1|
 X_np = np.array([[0., 1.], [1., 0.]])  # X Pauli matrix
@@ -150,4 +152,3 @@ res = minimize(g_min_2, parameters, method='L-BFGS-b', options={'gtol': 1e-8, 'd
 print(res.x)
 plt.plot(min_val)
 plt.show()
-
