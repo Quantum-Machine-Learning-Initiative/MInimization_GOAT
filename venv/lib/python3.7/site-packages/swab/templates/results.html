@@ -1,0 +1,132 @@
+<html>
+	<head>
+		<meta name="robots" content="noindex, nofollow, noarchive"/>
+		<link rel="stylesheet" href="static/swab/swab.css"/>
+	</head>
+	<body class="pageFullWidth">
+		<h1>A/B test results summary</h1>
+		<py:if test="dedupe">
+			<p>
+			<strong>Showing results per visitor</strong>.
+			If the same visitor has passed through an experiment multiple times,
+			only one trial is counted and a maximum of one goal conversion.
+			</p>
+			<p><a href="${request.make_url(query_replace={'nodedupe': 1})}">Show unfiltered results</a>.</p>
+		</py:if>
+		<py:else>
+			<p>
+			<strong>Showing all results</strong>.
+			If the same visitor has passed through an experiment multiple times,
+			all trials and conversions are shown.
+			</p>
+			<p><a href="${request.make_url(query_replace={'nodedupe': None})}">Show per visitor results</a>.</p>
+		</py:else>
+		<section py:for="exp in experiments">
+			<h2>Experiment: $exp.name</h2>
+			<?python
+			expdata = data[exp.name]
+			goals = data[exp.name]['goals']
+			control = data[exp.name]['control']
+			control_data = data[exp.name]['variants'][control]
+			?>
+			<table class="data">
+				<thead>
+					<tr>
+						<th rowspan="2">Variant</th>
+						<th rowspan="2">Number of tests</th>
+						<th py:for="goal in goals" colspan="4">Goal: $goal</th>
+					</tr>
+					<tr>
+						<py:for each="goal in goals">
+							<th>conversions</th>
+							<th>rate</th>
+							<th>z-score</th>
+							<th>confidence</th>
+							<th>probability of beating the control</th>
+						</py:for>
+					</tr>
+				</thead>
+				<tbody>
+					<tr
+						py:for="variant, vdata in sorted(data[exp.name]['variants'].items())"
+						class="${'control' if variant==control else None}"
+					>
+						<th>
+							<a href="${request.make_url(query={'control.{0}'.format(exp.name): variant})}">$variant</a>
+							<span class='control' title="This variant is selected as the control: the performance of other variants will be measured against this one" py:if="variant==control">control</span>
+						</th>
+						<td>${vdata['trials']}</td>
+						<py:for each="goal in goals">
+							<py:with vars="trials = vdata['trials']; goaldata = vdata['goals'][goal]">
+								<py:if test="not trials">
+									<td colspan="4">no data yet</td>
+								</py:if>
+								<py:else>
+									<td>${goaldata['conversions']}</td>
+									<td>${'{0:.1%}'.format(goaldata['rate'])}</td>
+									<td><py:if test="variant != control">${'{0:.3g}'.format(goaldata['z'])}</py:if></td>
+									<td><py:if test="variant != control">${'{0:.1%}'.format(goaldata['confidence'])}</py:if></td>
+									<td><py:if test="variant != control">${'{0:.1%}'.format(goaldata['p_beats_control'])}</py:if></td>
+								</py:else>
+							</py:with>
+						</py:for>
+					</tr>
+				</tbody>
+			</table>
+			<div py:for="variant, vdata in sorted(data[exp.name]['variants'].items())">
+				<py:if test="variant != data[exp.name]['control']">
+					<py:for each="goal, goaldata in vdata['goals'].items()">
+						<py:choose>
+							<py:when test="control_data['goals'][goal]['conversions'] == 0">
+								Insufficient data
+							</py:when>
+							<py:otherwise>
+								<?python
+								difference = goaldata['rate'] / control_data['goals'][goal]['rate']
+								?>
+								<p>
+									For the <strong>$goal</strong> goal, the <strong>$variant</strong> variant resulted in
+									<py:choose>
+										<span py:when="difference &gt;= 1" class="better">${'{0:.2%}'.format(difference - 1)} more conversions than the $control variant</span>
+										<span py:otherwise="" class="worse">${'{0:.2%}'.format(difference - 1)} fewer conversions than the $control variant</span>
+									</py:choose>
+								</p>
+								<ul class="simpleList" py:choose="">
+									<div class="confident99" py:when="goaldata['confidence'] &gt;= 0.99">
+										<li>
+											You have now collected enough data to be 99% certain that this conclusion is valid.
+										</li>
+										<li class="recommendation">
+											<py:choose>
+												Recommendation:
+												<span py:when="difference &gt;= 1">adopt $variant variant.</span>
+												<span py:otherwise="">adopt $control variant.</span>
+											</py:choose>
+										</li>
+									</div>
+									<div class="confident95" py:when="goaldata['confidence'] &gt;= 0.95">
+										<li>
+											You have collected enough data to be 95% sure that this difference is not simply due to chance factors.
+										</li>
+										<li class="recommendation">
+											Recommendation: <strong>let the test run for longer to be completely certain</strong>.
+										</li>
+									</div>
+									<div class="unconfident" py:otherwise="">
+										<li>
+											You don't have enough data to be sure yet that this difference is due to the variant you are testing or purely chance factors.
+										</li>
+										<li class="recommendation">
+											Recommendation: <strong>let the test run to collect more data</strong>.
+										</li>
+									</div>
+								</ul>
+							</py:otherwise>
+						</py:choose>
+					</py:for>
+				</py:if>
+			</div>
+		</section>
+	</body>
+</html>
+

@@ -1,0 +1,4 @@
+fresco
+fresco-static
+fresco-template
+piglet-templates
