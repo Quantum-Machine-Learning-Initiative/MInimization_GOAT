@@ -25,6 +25,13 @@ def g2(_theta, _phi):
     return np.power(np.abs(x1.dot(x2)), 2)
 
 
+def g2_i(_theta, _phi):
+    x1 = np.array([np.power(1 / 2, 0.5), np.power(1.j / 2, 0.5)])
+    x2 = (np.power(1 / 2, 0.5)) * np.array([np.sin(_theta) * np.exp(1.j * _phi), np.cos(_theta)])
+    return np.power(np.abs(x1.dot(x2)), 2)
+
+
+
 theta = np.arange(0, 2*np.pi, 0.1)
 phi = np.arange(0, 2*np.pi, 0.1)
 #Theta, Phi = np.meshgrid(theta, phi)
