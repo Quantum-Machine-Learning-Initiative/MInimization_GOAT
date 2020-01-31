@@ -7,7 +7,7 @@ from scipy.linalg import expm
 from numpy import ndarray
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-
+import matplotlib
 # commit test 2
 
 
@@ -93,10 +93,11 @@ def All_Proj():
 
 
 def Hamiltonian():
-    _Hamiltonian = CSWAR
+    _H_np = kron(H_np, kron(I_np, I_np))
+    _Hamiltonian = CSWAR.dot(_H_np)
+    _Hamiltonian = _H_np.dot(_Hamiltonian)
     _All_Proj = All_Proj()
-    _Hamiltonian = _All_Proj.dot(_Hamiltonian)
-    _Hamiltonian = CSWAR.conj().T.dot(_Hamiltonian)
+    _Hamiltonian = _Hamiltonian.conj().T.dot(_All_Proj.dot(_Hamiltonian))
     return _Hamiltonian
 
 
@@ -138,18 +139,28 @@ def g_min_1(_parameters):  # Using several U gates
 
 
 def g_min_2(_parameters):  # _parameters[0] is theta, _parameters[1] is phi
-    _q1 = H_np.dot([1, 0])
+    _q1 = [1, 0]
     _q2 = [1, 0]
     _q3 = [np.sin(_parameters[0]), np.exp(1.j * _parameters[1]) * np.cos(_parameters[0])]
     _q_all = kron(_q2, _q3)
     _q_all = kron(_q1, _q_all)
-    min_val.append(np.absolute(_q_all.conj().T.dot(Hamiltonian().dot(_q_all))))
-    return np.absolute(_q_all.conj().T.dot(Hamiltonian().dot(_q_all)))
+    print(_parameters)
+    _answer = np.absolute(_q_all.conj().T.dot(Hamiltonian().dot(_q_all)))
+    min_val.append(_answer)
+    overlapping.append(np.abs(np.dot(_q2, _q3)))
+    return _answer
 
 
-parameters = np.array([0.1, 0.2])
+parameters = np.array([0.1, 0.5])
 min_val = []
-res = minimize(g_min_2, parameters, method='L-BFGS-b', options={'gtol': 1e-8, 'disp': True})
+overlapping = []
+res = minimize(g_min_2, parameters, method='nelder-mead', options={'gtol': 1e-8, 'disp': False})
 print(res.x)
-plt.plot(min_val)
+fig, (plot1, plot2) = plt.subplots(2)
+plot1.plot(min_val)
+plot2.plot(overlapping)
+_fontsize = 12
+plot1.set_ylabel('Energy', fontsize=_fontsize)
+plot2.set_ylabel('Overlapping', fontsize=_fontsize)
+plot2.set_xlabel('Number of the iteration', fontsize=_fontsize)
 plt.show()

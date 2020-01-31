@@ -4,8 +4,10 @@
       <w>bfgs</w>
       <w>cswar</w>
       <w>disp</w>
+      <w>fontsize</w>
       <w>gtol</w>
       <w>hadamard</w>
+      <w>nelder</w>
       <w>proj</w>
       <w>projectq</w>
       <w>qubit</w>
